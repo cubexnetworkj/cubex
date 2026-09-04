@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CUBEX NETWORK - Portal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #000000; color: #ffffff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        :root { --bg-color: #000000; --accent-color: #ff6600; --text-light: #ffffff; --text-gray: #b3b3b3; --card-bg: #0f0805; --border-color: #3b2415; }
+
+        header, footer { height: 12vh; background-color: var(--bg-color); display: flex; justify-content: space-between; align-items: center; padding: 0 50px; border-bottom: 2px solid var(--accent-color); z-index: 10; }
+        footer { border-top: 2px solid var(--accent-color); border-bottom: none; justify-content: center; font-size: 0.85rem; color: var(--text-gray); }
+        .logo { font-size: 1.8rem; font-weight: 900; letter-spacing: 2px; color: var(--accent-color); text-shadow: 0 0 10px rgba(255, 102, 0, 0.5); }
+        nav a { color: var(--text-gray); text-decoration: none; margin-left: 25px; font-size: 0.95rem; transition: color 0.2s; cursor: pointer; }
+        nav a:hover, nav a.active { color: var(--accent-color); }
+
+        main { flex: 76vh; background: linear-gradient(135deg, #1a0f05 0%, #000000 100%); display: flex; justify-content: center; align-items: center; padding: 20px; position: relative; overflow-y: auto; }
+        
+        .screen { display: none; width: 1000px; justify-content: space-between; align-items: center; }
+        .screen.active-screen { display: flex; }
+
+        #auth-screen { width: 450px; justify-content: center; }
+        .auth-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 30px; box-shadow: 0 0 30px rgba(255, 102, 0, 0.3); width: 100%; }
+        .auth-card h2 { color: var(--accent-color); text-align: center; margin-bottom: 20px; text-transform: uppercase; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--accent-color); margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; background: #1a0500; border: 1px solid var(--border-color); border-radius: 6px; color: #ffffff; font-size: 1rem; }
+        .input-group input:focus { outline: none; border-color: var(--accent-color); }
+        .auth-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #ff5500 0%, #ff8800 100%); border: none; border-radius: 6px; color: #ffffff; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 15px; transition: opacity 0.2s; }
+        .auth-btn:hover { opacity: 0.9; }
+        .switch-text { text-align: center; font-size: 0.85rem; color: var(--text-gray); margin-top: 15px; }
+        .switch-text span { color: var(--accent-color); cursor: pointer; text-decoration: underline; }
+
+        .home-left { max-width: 600px; text-align: left; }
+        .home-left h1 { font-size: 3.2rem; margin-bottom: 20px; font-weight: 900; letter-spacing: 1px; color: var(--text-light); }
+        .home-left h1 span { color: var(--accent-color); }
+        .home-left p { font-size: 1.05rem; line-height: 1.7; color: var(--text-gray); margin-bottom: 25px; }
+        .ip-box { background-color: #000000; color: var(--accent-color); border: 1px solid var(--accent-color); padding: 12px 25px; font-size: 1.1rem; font-family: monospace; border-radius: 8px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.2s; display: inline-block; margin-bottom: 20px; }
+        .ip-box:hover { transform: scale(1.05); }
+
+        #discord-box { display: none; margin-top: 10px; }
+        .discord-btn { background: linear-gradient(135deg, #ff6600 0%, #ff4500 100%); color: #fff; padding: 12px 20px; border-radius: 8px; display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3); transition: transform 0.2s; border: 1px solid #ff8800; }
+        .discord-btn:hover { transform: scale(1.03); }
+        .discord-icon-svg { width: 24px; height: 24px; fill: #fff; }
+        
+        .profile-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 20px; width: 280px; text-align: center; box-shadow: 0 0 20px rgba(255, 102, 0, 0.2); flex-shrink: 0; }
+        #minotar-avatar { width: 100px; height: 100px; margin-bottom: 15px; border: 3px solid var(--accent-color); border-radius: 10px; background-color: #1a0500; image-rendering: pixelated; display: block; margin-left: auto; margin-right: auto; }
+        #profile-name { font-size: 1.2rem; font-weight: bold; color: var(--accent-color); margin-bottom: 5px; word-break: break-all; }
+        #profile-balance { font-size: 0.9rem; color: #00ffcc; margin-bottom: 10px; font-weight: bold; }
+        #not-logged-in { color: var(--text-gray); font-size: 0.9rem; padding: 10px 0; }
+        .logout-btn { margin-top: 10px; font-size: 0.85rem; color: #ff4444; cursor: pointer; background: none; border: none; text-decoration: underline; font-weight: bold; }
+
+        /* MAĞAZA EKRANI */
+        #store-screen { flex-direction: column; align-items: flex-start; width: 1000px; gap: 15px; }
+        .store-header { width: 100%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .store-header h2 { color: var(--accent-color); font-size: 1.5rem; }
+        .balance-display { background: var(--card-bg); border: 1px solid var(--accent-color); padding: 8px 15px; border-radius: 6px; font-size: 0.95rem; color: #00ffcc; font-weight: bold; display: flex; gap: 15px; align-items: center; }
+        .load-money-btn { background: #00ffcc; color: #000; border: none; padding: 5px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        .load-money-btn:hover { background: #00ddbb; }
+
+        .store-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; }
+        .store-item { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 15px rgba(255, 102, 0, 0.1); }
+        .store-item h4 { color: var(--accent-color); font-size: 1rem; margin-bottom: 6px; }
+        .store-item p { font-size: 0.75rem; color: var(--text-gray); margin-bottom: 10px; line-height: 1.3; }
+        .price-tag { font-size: 0.85rem; color: #fff; font-weight: bold; margin-bottom: 8px; }
+        .buy-btn { background: #ff6600; color: #000; border: none; padding: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: background 0.2s; width: 100%; font-size: 0.9rem; }
+        .buy-btn:hover { background: #ff8800; }
+
+        /* SIRALAMA EKRANI */
+        #leaderboard-screen { flex-direction: column; align-items: flex-start; width: 800px; gap: 15px; }
+        .lb-table { width: 100%; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 10px; border-collapse: collapse; overflow: hidden; }
+        .lb-table th, .lb-table td { padding: 12px 15px; text-align: left; }
+        .lb-table th { background: #1a0802; color: var(--accent-color); font-size: 0.95rem; border-bottom: 2px solid var(--border-color); }
+        .lb-table td { font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: var(--text-gray); }
+        .lb-table tr:hover td { color: #fff; background: rgba(255, 102, 0, 0.05); }
+
+        /* YENİ: GECE PAZARI (VALORANT TARZI KARTLAR) */
+        #nightmarket-screen { flex-direction: column; align-items: center; width: 1000px; gap: 20px; }
+        .nm-header { text-align: center; margin-bottom: 10px; }
+        .nm-header h2 { color: #bd00ff; font-size: 2rem; text-shadow: 0 0 15px rgba(189,0,255,0.5); letter-spacing: 2px; }
+        .nm-header p { color: var(--text-gray); font-size: 0.9rem; }
+        
+        .nm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; perspective: 1000px; }
+        .nm-card { width: 100%; height: 260px; cursor: pointer; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+        .nm-card.flipped { transform: rotateY(180deg); }
+
+        .nm-card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; border: 2px solid #bd00ff; box-shadow: 0 0 20px rgba(189,0,255,0.2); }
+        
+        /* Kartın Arkası (Kapalı) */
+        .nm-card-back { background: linear-gradient(135deg, #180524 0%, #08020d 100%); color: #bd00ff; }
+        .nm-card-back .nm-logo-icon { font-size: 2.5rem; margin-bottom: 10px; animation: pulseGlow 2s infinite alternate; }
+        .nm-card-back span { font-weight: bold; letter-spacing: 1px; font-size: 1.1rem; text-shadow: 0 0 8px rgba(189,0,255,0.6); }
+        
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* Kartın Önü (Açık - İndirimli Ürün) */
+        .nm-card-front { background: linear-gradient(135deg, #12031a 0%, #050108 100%); transform: rotateY(180deg); border-color: #ff0055; box-shadow: 0 0 25px rgba(255,0,85,0.3); text-align: center; justify-content: space-between; }
+        .nm-discount-badge { background: #ff0055; color: #fff; font-size: 0.75rem; font-weight: bold; padding: 3px 8px; border-radius: 20px; align-self: flex-end; }
+        .nm-item-info h4 { color: #fff; font-size: 1.1rem; margin-bottom: 5px; }
+        .nm-item-info p { font-size: 0.75rem; color: var(--text-gray); margin-bottom: 10px; }
+        .nm-prices { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .old-price { text-decoration: line-through; color: var(--text-gray); font-size: 0.85rem; }
+        .new-price { color: #00ffcc; font-size: 1.1rem; font-weight: bold; }
+        .nm-buy-btn { background: #ff0055; color: #fff; border: none; width: 100%; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .nm-buy-btn:hover { background: #ff2a6d; }
+
+
+        /* BAKIYE YÜKLEME MODAL */
+        #payment-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
+        .payment-box { width: 500px; background: var(--card-bg); border: 2px solid #00ffcc; border-radius: 12px; padding: 25px; box-shadow: 0 0 40px rgba(0,255,204,0.3); position: relative; }
+        .payment-box h3 { color: #00ffcc; margin-bottom: 15px; text-align: center; text-transform: uppercase; }
+        .pay-input-group { margin-bottom: 12px; }
+        .pay-input-group label { display: block; font-size: 0.8rem; color: #00ffcc; margin-bottom: 4px; }
+        .pay-input-group input { width: 100%; padding: 10px; background: #1a0500; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 0.95rem; }
+        .pay-input-group input:focus { outline: none; border-color: #00ffcc; }
+        .pay-row { display: flex; gap: 10px; }
+        
+        .auto-fill-btn { background: #333; color: #ffcc00; border: 1px dashed #ffcc00; padding: 6px 10px; border-radius: 5px; font-size: 0.8rem; cursor: pointer; width: 100%; margin-bottom: 15px; font-weight: bold; transition: background 0.2s; }
+        .auto-fill-btn:hover { background: #444; }
+        
+        .pay-action-buttons { display: flex; gap: 10px; margin-top: 15px; }
+
+        /* KASA Çark / Animasyon Ekranı */
+        #case-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
+        .case-box-container { width: 600px; background: #120904; border: 2px solid #ffcc00; border-radius: 15px; padding: 30px; text-align: center; box-shadow: 0 0 40px rgba(255,204,0,0.4); position: relative; }
+        .case-window { width: 100%; height: 120px; background: #050201; border: 2px solid #3b2415; border-radius: 10px; overflow: hidden; position: relative; margin: 20px 0; display: flex; align-items: center; }
+        .case-pointer { position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: #ffcc00; z-index: 10; transform: translateX(-50%); box-shadow: 0 0 10px #ffcc00; }
+        .case-strip { display: flex; position: absolute; left: 0; transition: transform 4s cubic-bezier(0.15, 0.85, 0.35, 1); will-change: transform; }
+        .case-item-card { min-width: 140px; height: 100px; background: #1a0d05; border: 1px solid #ffcc00; margin-right: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; }
+        .case-item-card span { font-size: 0.85rem; font-weight: bold; color: #fff; margin-top: 5px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">CUBEX NETWORK</div>
+        <nav>
+            <a class="active" onclick="switchScreen('home-screen', this)">Ana Sayfa</a>
+            <a onclick="switchScreen('store-screen', this)">Mağaza</a>
+            <a onclick="switchScreen('leaderboard-screen', this)">Sıralama</a>
+            <a onclick="switchScreen('nightmarket-screen', this); initNightMarket();" style="color: #bd00ff; font-weight: bold;">🌙 Gece Pazarı</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- ANA EKRAN -->
+        <div id="home-screen" class="screen active-screen">
+            <div class="home-left">
+                <h1>Cubex <span>Network</span></h1>
+                <p>PvP tutkunları için özel olarak optimize edilmiş, yüksek tempolu ve rekabetçi bir Minecraft sunucusudur. Özel vuruş algılama altyapımız ve hileye geçit vermeyen koruma sistemimizle arenada yeteneğini sergile.</p>
+                <div class="ip-box" onclick="navigator.clipboard.writeText('play.cubexnw.com'); alert('IP Kopyalandı: play.cubexnw.com');">play.cubexnw.com</div>
+                
+                <div id="discord-box">
+                    <a href="https://discord.gg/nCtaS7M64" target="_blank" class="discord-btn">
+                        <svg class="discord-icon-svg" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.011c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                        DISCORD SUNUCUMUZA KATIL
+                    </a>
+                </div>
+            </div>
+
+            <div class="profile-card">
+                <h3 style="color: var(--accent-color); margin-bottom: 15px;">OYUNCU PROFİLİ</h3>
+                
+                <div id="not-logged-in">
+                    <p style="margin-bottom: 15px;">Henüz giriş yapmadın.</p>
+                    <button class="auth-btn" onclick="switchScreen('auth-screen')">GİRİŞ / KAYIT</button>
+                </div>
+
+                <div id="logged-in" style="display: none;">
+                    <img id="minotar-avatar" src="" alt="Minecraft Skin">
+                    <div id="profile-name"></div>
+                    <div id="profile-balance">Bakiye: 0 TL</div>
+                    <button class="logout-btn" onclick="logout()">Çıkış Yap</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAĞAZA EKRANI -->
+        <div id="store-screen" class="screen">
+            <div class="store-header">
+                <h2>CUBEX - ÖZEL MAĞAZA</h2>
+                <div class="balance-display" id="store-user-balance">
+                    <span>Bakiye: 0 TL</span>
+                    <button class="load-money-btn" onclick="openPaymentModal()">+ Bakiye Yükle</button>
+                </div>
+            </div>
+
+            <div class="store-grid">
+                <div class="store-item">
+                    <div>
+                        <h4>Kan Kılıcı</h4>
+                        <p>Vampirik hasar veren efsanevi kılıç.</p>
+                    </div>
+                    <div>
+                        <div class="price-tag">15 TL (150 Kredi)</div>
+                        <button class="buy-btn" onclick="buyItem('Kan Kılıcı', 15)">SATIN AL</button>
+                    </div>
+                </div>
+                <div class="store-item">
+                    <div>
+                        <h4>Buz Kılıcı</h4>
+                        <p>Rakibini donduran sihirli kılıç.</p>
+                    </div>
+                    <div>
+                        <div class="price-tag">25 TL (250 Kredi)</div>
+                        <button class="buy-btn" onclick="buyItem('Buz Kılıcı', 25)">SATIN AL</button>
+                    </div>
+                </div>
+                <div class="store-item">
+                    <div>
+                        <h4>Zehir Kılıcı</h4>
+                        <p>Zamanla can yakan ölümcül kılıç.</p>
+                    </div>
+                    <div>
+                        <div class="price-tag">40 TL (400 Kredi)</div>
+                        <button class="buy-btn" onclick="buyItem('Zehir Kılıcı', 40)">SATIN AL</button>
+                    </div>
+                </div>
+                <div class="store-item" style="border-color: #ffcc00;">
+                    <div>
+                        <h4 style="color: #ffcc00;">Gizemli Kılıç Kasası</h4>
+                        <p><b>Oranlar:</b><br>• Kan: %50<br>• Buz: %35<br>• Zehir: %15</p>
+                    </div>
+                    <div>
+                        <div class="price-tag">35 TL (350 Kredi)</div>
+                        <button class="buy-btn" onclick="spinMysteryBox()" style="background: #ffcc00;">KASAYI AÇ</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <button class="auth-btn" style="width: auto; padding: 6px 15px;" onclick="switchScreen('home-screen')">← Ana Sayfaya Dön</button>
+            </div>
+        </div>
+
+        <!-- SIRALAMA EKRANI -->
+        <div id="leaderboard-screen" class="screen">
+            <h2 style="color: var(--accent-color); margin-bottom: 5px;">OYUNCU SIRALAMASI</h2>
+            <table class="lb-table">
+                <thead>
+                    <tr>
+                        <th>Sıra</th>
+                        <th>Oyuncu</th>
+                        <th>Öldürme (Kills)</th>
+                        <th>Seviye</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>ProGamerTR</td><td>1420</td><td>99</td></tr>
+                    <tr><td>2</td><td>CubexKing</td><td>1280</td><td>92</td></tr>
+                    <tr><td>3</td><td>ShadowSniper</td><td>1155</td><td>88</td></tr>
+                    <tr><td>4</td><td>AnkaVurucu</td><td>980</td><td>76</td></tr>
+                    <tr><td>5</td><td>DemirYurek</td><td>890</td><td>70</td></tr>
+                </tbody>
+            </table>
+            <button class="auth-btn" style="width: auto; padding: 6px 15px;" onclick="switchScreen('home-screen')">← Ana Sayfaya Dön</button>
+        </div>
+
+        <!-- YENİ: GECE PAZARI (VALORANT TARZI KARTLAR) -->
+        <div id="nightmarket-screen" class="screen">
+            <div class="nm-header">
+                <h2>GECE PAZARI</h2>
+                <p>Özel indirimli özel silahlar! Kartlara tıklayarak indirimlerini ve eşyaları açığa çıkar.</p>
+            </div>
+
+            <div class="nm-grid" id="nightmarket-grid">
+                <!-- Javascript ile dinamik 6 adet kart doldurulacak -->
+            </div>
+
+            <button class="auth-btn" style="width: auto; padding: 6px 15px; margin-top: 10px;" onclick="switchScreen('home-screen')">← Ana Sayfaya Dön</button>
+        </div>
+
+        <!-- GİRİŞ / KAYIT EKRANI -->
+        <div id="auth-screen" class="screen">
+            <div class="auth-card">
+                <h2 id="auth-form-title">GİRİŞ YAP</h2>
+                
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>Kullanıcı Adı (Minecraft İsmi)</label>
+                        <input type="text" id="login-username" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Şifre</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="auth-btn">GİRİŞ YAP</button>
+                </form>
+
+                <form id="register-form" style="display: none;" onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label>Kullanıcı Adı (Minecraft İsmi)</label>
+                        <input type="text" id="register-username" required minlength="3">
+                    </div>
+                    <div class="input-group">
+                        <label>E-Posta</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Şifre Belirle</label>
+                        <input type="password" id="register-password" required minlength="4">
+                    </div>
+                    <button type="submit" class="auth-btn">KAYIT OL</button>
+                </form>
+
+                <div class="switch-text" id="login-switch">
+                    Hesabın yok mu? <span onclick="toggleAuthMode('register')">Kayıt Ol</span>
+                </div>
+                <div class="switch-text" id="register-switch" style="display: none;">
+                    Zaten hesabın var mı? <span onclick="toggleAuthMode('login')">Giriş Yap</span>
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <span onclick="switchScreen('home-screen')" style="color: var(--text-gray); font-size: 0.8rem; cursor: pointer; text-decoration: underline;">← Ana Sayfaya Dön</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- BAKIYE YÜKLEME ARAYÜZÜ (MODAL) -->
+    <div id="payment-modal">
+        <div class="payment-box">
+            <h3>Güvenli Bakiye Yükleme</h3>
+            
+            <button class="auto-fill-btn" onclick="fillTestCard()">⚡ Örnek Bilgileri Otomatik Doldur</button>
+
+            <div class="pay-input-group">
+                <label>Kart Üzerindeki Ad Soyad</label>
+                <input type="text" id="cc-name" placeholder="Ad Soyad">
+            </div>
+            <div class="pay-input-group">
+                <label>Kart Numarası</label>
+                <input type="text" id="cc-number" placeholder="4543 0000 0000 0000" maxlength="19" oninput="formatCardNumber(this)">
+            </div>
+            <div class="pay-row">
+                <div class="pay-input-group" style="flex: 1;">
+                    <label>Son Kullanma</label>
+                    <input type="text" id="cc-expiry" placeholder="AA/YY" maxlength="5" oninput="formatExpiry(this)">
+                </div>
+                <div class="pay-input-group" style="flex: 1;">
+                    <label>CVV</label>
+                    <input type="password" id="cc-cvv" placeholder="123" maxlength="3">
+                </div>
+            </div>
+            <div class="pay-input-group">
+                <label>Yüklenecek Tutar (TL - Min 5 TL)</label>
+                <input type="number" id="load-amount" placeholder="50" min="5">
+            </div>
+
+            <div class="pay-action-buttons">
+                <button class="auth-btn" style="margin-top:0; background: #00ffcc; color: #000;" onclick="processPayment()">Bakiye Yatır</button>
+                <button class="auth-btn" style="margin-top:0; background: #444; color: #fff;" onclick="closePaymentModal()">İptal Et</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KASA Çark / Animasyon Ekranı -->
+    <div id="case-modal">
+        <div class="case-box-container">
+            <h3 style="color: #ffcc00; margin-bottom: 5px;">GİZEMLİ KILIÇ KASASI AÇILIYOR</h3>
+            <p style="font-size: 0.85rem; color: #b3b3b3;">Şansına hangi kılıç çıkacak?</p>
+            
+            <div class="case-window">
+                <div class="case-pointer"></div>
+                <div class="case-strip" id="case-strip"></div>
+            </div>
+
+            <button id="case-close-btn" class="auth-btn" style="display:none; margin-top: 10px; background: #ffcc00; color: #000;" onclick="closeCaseModal()">Kapat ve Devam Et</button>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 Cubex Network. Tüm hakları saklıdır. | Tasarım: CUBEX Network
+    </footer>
+
+    <script>
+        window.onload = function() {
+            checkAuthStatus();
+        }
+
+        function switchScreen(screenId, element) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+            
+            if(element) {
+                document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+                element.classList.add('active');
+            }
+        }
+
+        function toggleAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('auth-form-title').innerText = 'KAYIT OL';
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('register-form').style.display = 'block';
+                document.getElementById('login-switch').style.display = 'none';
+                document.getElementById('register-switch').style.display = 'block';
+            } else {
+                document.getElementById('auth-form-title').innerText = 'GİRİŞ YAP';
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('register-form').style.display = 'none';
+                document.getElementById('login-switch').style.display = 'block';
+                document.getElementById('register-switch').style.display = 'none';
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+
+            if (localStorage.getItem('cubex_user_' + username)) return;
+
+            const userData = { username, email, password, balance: 0 };
+            localStorage.setItem('cubex_user_' + username, JSON.stringify(userData));
+            toggleAuthMode('login');
+            document.getElementById('login-username').value = username;
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const storedUser = localStorage.getItem('cubex_user_' + username);
+
+            if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                if (userData.password === password) {
+                    localStorage.setItem('cubex_logged_in_user', username);
+                    checkAuthStatus();
+                    switchScreen('home-screen');
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('cubex_logged_in_user');
+            checkAuthStatus();
+        }
+
+        function checkAuthStatus() {
+            const loggedInUser = localStorage.getItem('cubex_logged_in_user');
+            const notLoggedInDiv = document.getElementById('not-logged-in');
+            const loggedInDiv = document.getElementById('logged-in');
+            const discordBox = document.getElementById('discord-box');
+
+            if (loggedInUser) {
+                notLoggedInDiv.style.display = 'none';
+                loggedInDiv.style.display = 'block';
+                discordBox.style.display = 'block';
+                document.getElementById('profile-name').innerText = loggedInUser;
+                
+                let userData = JSON.parse(localStorage.getItem('cubex_user_' + loggedInUser));
+                let balance = userData ? (userData.balance || 0) : 0;
+                document.getElementById('profile-balance').innerText = `Bakiye: ${balance} TL`;
+                document.querySelector('.balance-display span').innerText = `Bakiye: ${balance} TL`;
+                document.getElementById('minotar-avatar').src = `https://minotar.net/avatar/${loggedInUser}/100.png`;
+            } else {
+                notLoggedInDiv.style.display = 'block';
+                loggedInDiv.style.display = 'none';
+                discordBox.style.display = 'none';
+            }
+        }
+
+        /* GECE PAZARI SİSTEMİ (VALORANT TARZI DÖNEN KARTLAR) */
+        const nightMarketItems = [
+            { name: "Kan Kılıcı", desc: "Vampirik hasar veren efsanevi kılıç.", oldPrice: 30, newPrice: 15, discount: "%50 İNDİRİM" },
+            { name: "Thor Kralın Kılıcı", desc: "Yıldırım gücüyle saldıran ilahi silah.", oldPrice: 80, newPrice: 48, discount: "%40 İNDİRİM" },
+            { name: "Buz Kılıcı", desc: "Rakibini donduran sihirli kılıç.", oldPrice: 50, newPrice: 25, discount: "%50 İNDİRİM" },
+            { name: "Zehir Kılıcı", desc: "Zamanla can yakan ölümcül kılıç.", oldPrice: 60, newPrice: 36, discount: "%40 İndirim" },
+            { name: "Gölge Hançeri", desc: "Görünmezlik ve kritik vuruş sağlar.", oldPrice: 45, newPrice: 27, discount: "%40 İndirim" },
+            { name: "Ejderha Pençesi", desc: "Efsanevi ejderha ateşine sahip kılıç.", oldPrice: 100, newPrice: 50, discount: "%50 İNDİRİM" }
+        ];
+
+        function initNightMarket() {
+            const grid = document.getElementById('nightmarket-grid');
+            grid.innerHTML = '';
+
+            nightMarketItems.forEach((item, index) => {
+                grid.innerHTML += `
+                    <div class="nm-card" onclick="flipCard(this)">
+                        <div class="nm-card-face nm-card-back">
+                            <div class="nm-logo-icon">🌙</div>
+                            <span>KARTI ÇEVİR</span>
+                        </div>
+                        <div class="nm-card-face nm-card-front" onclick="event.stopPropagation()">
+                            <div class="nm-discount-badge">${item.discount}</div>
+                            <div class="nm-item-info">
+                                <h4>${item.name}</h4>
+                                <p>${item.desc}</p>
+                            </div>
+                            <div>
+                                <div class="nm-prices">
+                                    <span class="old-price">${item.oldPrice} TL</span>
+                                    <span class="new-price">${item.newPrice} TL</span>
+                                </div>
+                                <button class="nm-buy-btn" onclick="buyNightMarketItem('${item.name}', ${item.newPrice})">SATIN AL</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function flipCard(cardElement) {
+            cardElement.classList.toggle('flipped');
+        }
+
+        function buyNightMarketItem(itemName, price) {
+            const loggedInUser = localStorage.getItem('cubex_logged_in_user');
+            if (!loggedInUser) {
+                switchScreen('auth-screen');
+                return;
+            }
+            let userData = JSON.parse(localStorage.getItem('cubex_user_' + loggedInUser));
+            let balance = userData.balance || 0;
+
+            if (balance >= price) {
+                userData.balance = balance - price;
+                localStorage.setItem('cubex_user_' + loggedInUser, JSON.stringify(userData));
+                checkAuthStatus();
+                alert(`Tebrikler! Gece Pazarından ${itemName} başarıyla satın alındı.`);
+            } else {
+                alert('Yetersiz bakiye! Bakiye yüklemek için Mağaza ekranına gidebilirsin.');
+            }
+        }
+
+        /* Ödeme Arayüzü Açma / Kapatma Fonksiyonları */
+        function openPaymentModal() {
+            const loggedInUser = localStorage.getItem('cubex_logged_in_user');
+            if (!loggedInUser) {
+                switchScreen('auth-screen');
+                return;
+            }
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+        }
+
+        function fillTestCard() {
+            document.getElementById('cc-name').value = "Ahmet Yılmaz";
+            document.getElementById('cc-number').value = "4543 1234 5678 9010";
+            document.getElementById('cc-expiry').value = "10/28";
+            document.getElementById('cc-cvv').value = "987";
+            document.getElementById('load-amount').value = "50";
+        }
+
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\D/g, '').substring(0, 16);
+            let parts = value.match(/.{1,4}/g);
+            input.value = parts ? parts.join(' ') : '';
+        }
+
+        function formatExpiry(input) {
+            let value = input.value.replace(/\D/g, '').substring(0, 4);
+            if (value.length >= 3) {
+                input.value = value.substring(0, 2) + '/' + value.substring(2);
+            } else {
+                input.value = value;
+            }
+        }
+
+        function processPayment() {
+            const loggedInUser = localStorage.getItem('cubex_logged_in_user');
+            const name = document.getElementById('cc-name').value.trim();
+            const rawCardNumber = document.getElementById('cc-number').value.replace(/\s/g, '');
+            const expiry = document.getElementById('cc-expiry').value.trim();
+            const cvv = document.getElementById('cc-cvv').value.trim();
+            const amount = parseFloat(document.getElementById('load-amount').value);
+
+            if (!name || name.split(' ').length < 2) {
+                alert('Lütfen kart üzerindeki ad soyad bilgisini eksiksiz girin.');
+                return;
+            }
+            if (rawCardNumber.length !== 16 || isNaN(rawCardNumber)) {
+                alert('Geçersiz kart numarası! 16 haneli olmalıdır.');
+                return;
+            }
+            if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) {
+                alert('Geçersiz son kullanma tarihi (AA/YY formatında olmalıdır).');
+                return;
+            }
+            if (cvv.length !== 3 || isNaN(cvv)) {
+                alert('Geçersiz CVV kodu.');
+                return;
+            }
+            if (isNaN(amount) || amount < 5) {
+                alert('Minimum bakiye yükleme tutarı 5 TL\'dir.');
+                return;
+            }
+
+            let userData = JSON.parse(localStorage.getItem('cubex_user_' + loggedInUser));
+            userData.balance = (userData.balance || 0) + amount;
+            localStorage.setItem('cubex_user_' + loggedInUser, JSON.stringify(userData));
+            
+            checkAuthStatus();
+            alert(`Ödeme Başarılı! Hesabınıza ${amount} TL yatırıldı.`);
+            
+            document.getElementById('cc-name').value = '';
+            document.getElementById('cc-number').value = '';
+            document.getElementById('cc-expiry').value = '';
+            document.getElementById('cc-cvv').value = '';
+            document.getElementById('load-amount').value = '';
+            closePaymentModal();
+        }
+
+        function buyItem(itemName, price) {
+            const loggedInUser = localStorage.getItem('cubex_logged_in_user');
+            if (!loggedInUser) {
+                switchScreen('auth-screen');
+                return;
+            }
+            let userData = JSON.parse(localStorage.getItem('cubex_user_' + loggedInUser));
+            let balance = userData.balance || 0;
+
+            if (balance >= price) {
+                userData.balance = balance - price;
+                localStorage.setItem('cubex_user_' + loggedInUser, JSON.stringify(userData));
+                checkAuthStatus();
+                alert(`Tebrikler! ${itemName} satın alındı ve envanterine eklendi.`);
+            } else {
+                alert('Yetersiz bakiye! Lütfen bakiye yükleme ekranını açarak bakiye yükleyin.');
+            }
+        }
+
+        function spinMysteryBox() {
+            const loggedInUser = localStorage.getItem('cubex_logged_in_user');
+            if (!loggedInUser) {
+                switchScreen('auth-screen');
+                return;
+            }
+            let userData = JSON.parse(localStorage.getItem('cubex_user_' + loggedInUser));
+            let balance = userData.balance || 0;
+            let boxPrice = 35;
+
+            if (balance < boxPrice) {
+                alert('Yetersiz bakiye! Gizemli Kasa 35 TL\'dir.');
+                return;
+            }
+
+            userData.balance = balance - boxPrice;
+            localStorage.setItem('cubex_user_' + loggedInUser, JSON.stringify(userData));
+            checkAuthStatus();
+
+            const modal = document.getElementById('case-modal');
+            const strip = document.getElementById('case-strip');
+            const closeBtn = document.getElementById('case-close-btn');
+            closeBtn.style.display = 'none';
+            modal.style.display = 'flex';
+
+            const rand = Math.random() * 100;
+            let winningSword = rand < 50 ? 'Kan Kılıcı' : (rand < 85 ? 'Buz Kılıcı' : 'Thor Kralın Kılıcı');
+
+            let itemsHTML = '';
+            let winningIndex = 35;
+            const swordPool = ['Kan Kılıcı', 'Buz Kılıcı', 'Thor Kralın Kılıcı'];
+
+            let sequence = [];
+            for (let i = 0; i < 40; i++) {
+                if (i === winningIndex) {
+                    sequence.push(winningSword);
+                } else {
+                    sequence.push(swordPool[Math.floor(Math.random() * swordPool.length)]);
+                }
+            }
+
+            sequence.forEach(sword => {
+                let color = sword === 'Kan Kılıcı' ? '#ff4444' : (sword === 'Buz Kılıcı' ? '#44aaff' : '#ffcc00');
+                itemsHTML += `<div class="case-item-card"><div style="font-size:1.5rem;">⚔️</div><span style="color:${color}">${sword}</span></div>`;
+            });
+
+            strip.style.transition = 'none';
+            strip.style.transform = 'translateX(0px)';
+            strip.innerHTML = itemsHTML;
+
+            setTimeout(() => {
+                const itemWidth = 150;
+                const targetOffset = (winningIndex * itemWidth) - (600 / 2) + (itemWidth / 2);
+                
+                strip.style.transition = 'transform 4s cubic-bezier(0.08, 0.82, 0.15, 1)';
+                strip.style.transform = `translateX(-${targetOffset}px)`;
+            }, 50);
+
+            setTimeout(() => {
+                closeBtn.style.display = 'block';
+                alert(`🎉 Kutudan çıkan ödül: ${winningSword}! Envanterine eklendi.`);
+            }, 4100);
+        }
+
+        function closeCaseModal() {
+            document.getElementById('case-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
